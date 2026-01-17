@@ -1,0 +1,68 @@
+@prefix ex: <http://example.org/snowwhite/> .
+@prefix schema: <http://schema.org/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# --- 인물 정의 ---
+
+ex:SnowWhite a schema:Person ;
+    schema:name "백설공주" ;
+    schema:gender "Female" ;
+    ex:hasFeature "눈처럼 하얀 피부", "피처럼 붉은 입술" ;
+    schema:parent ex:EvilQueen .
+
+ex:EvilQueen a schema:Person ;
+    schema:name "왕비" ;
+    schema:job "여왕" ;
+    ex:hasItem ex:MagicMirror ;
+    schema:description "백설공주의 계모이며 시기심이 많음" .
+
+ex:SevenDwarfs a schema:Organization ;
+    schema:name "일곱 난쟁이" ;
+    schema:homeLocation ex:CottageInForest .
+
+ex:Prince a schema:Person ;
+    schema:name "이웃나라 왕자" .
+
+# --- 사물 및 장소 ---
+
+ex:MagicMirror a schema:Thing ;
+    schema:name "마법의 거울" ;
+    ex:saysTo ex:EvilQueen "세상에서 가장 예쁜 사람은 백설공주입니다." .
+
+ex:PoisonApple a schema:Food ;
+    schema:name "독사과" ;
+    ex:createdBy ex:EvilQueen .
+
+ex:CottageInForest a schema:Place ;
+    schema:name "숲속 작은 집" .
+
+# --- 관계 및 사건 흐름 ---
+
+ex:Conflict_1 a schema:Event ;
+    schema:actor ex:EvilQueen ;
+    schema:target ex:SnowWhite ;
+    ex:motive "질투" ;
+    schema:description "왕비가 사냥꾼에게 백설공주를 죽이라고 명령함" .
+
+ex:Rescue_1 a schema:Event ;
+    schema:actor ex:SevenDwarfs ;
+    schema:recipient ex:SnowWhite ;
+    schema:description "난쟁이들이 숲에 버려진 백설공주를 보살핌" .
+
+ex:Crisis_1 a schema:Event ;
+    schema:actor ex:EvilQueen ;
+    schema:instrument ex:PoisonApple ;
+    schema:target ex:SnowWhite ;
+    schema:result "백설공주가 깊은 잠에 빠짐" .
+
+ex:HappyEnding a schema:Event ;
+    schema:actor ex:Prince ;
+    schema:participant ex:SnowWhite ;
+    schema:description "왕자의 입맞춤으로 백설공주가 깨어나고 결혼함" .
+
+# --- 속성 설명 (RDFS) ---
+ex:hasFeature rdfs:label "특징" .
+ex:hasItem rdfs:label "소유물" .
+ex:saysTo rdfs:label "말하다" .

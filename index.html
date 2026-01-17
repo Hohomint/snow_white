@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>백설공주: 이야기와 관계도</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Nanum+Myeongjo:wght@700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --point-red: #d32f2f;
+            --deep-forest: #1a2a1a;
+            --forest-green: #2d4a2d;
+            --gold: #fbc02d;
+            --white: #ffffff;
+            --text-main: #333;
+        }
+
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Gowun Batang', serif;
+            background-color: var(--deep-forest);
+            color: var(--white);
+            scroll-behavior: smooth;
+        }
+
+        /* 메인 대문 */
+        .hero {
+            height: 100vh;
+            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(26, 42, 26, 1)),
+                url('https://images.unsplash.com/photo-1518709779341-56cf4535e94b?auto=format&fit=crop&w=1920&q=80');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+        }
+
+        .hero h1 {
+            font-family: 'Nanum Myeongjo';
+            font-size: 6rem;
+            color: var(--gold);
+            margin: 0;
+            letter-spacing: -2px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .hero p {
+            font-size: 1.6rem;
+            margin: 20px 0 50px;
+            opacity: 0.9;
+        }
+
+        .main-menu {
+            display: flex;
+            gap: 20px;
+        }
+
+        .main-menu button {
+            padding: 15px 40px;
+            border: 2px solid var(--gold);
+            background: rgba(0, 0, 0, 0.3);
+            color: var(--gold);
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            font-family: 'Nanum Myeongjo';
+            font-weight: bold;
+            transition: 0.3s;
+            backdrop-filter: blur(5px);
+        }
+
+        .main-menu button:hover {
+            background: var(--gold);
+            color: var(--deep-forest);
+            box-shadow: 0 0 20px rgba(251, 192, 45, 0.5);
+            transform: scale(1.05);
+        }
+
+        /* 고정 메뉴 바 */
+        nav {
+            background: rgba(26, 42, 26, 0.95);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            padding: 15px 0;
+            border-bottom: 2px solid var(--gold);
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease;
+        }
+
+        .nav-link {
+            color: #ccc;
+            text-decoration: none;
+            margin: 0 25px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .nav-link:hover {
+            color: var(--gold);
+        }
+
+        /* 섹션 공통 */
+        .section {
+            display: none;
+            padding: 100px 20px;
+            min-height: 80vh;
+            background: #fdfdfd;
+            color: #222;
+        }
+
+        .section.active {
+            display: block;
+            animation: fadeIn 0.8s;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        h2 {
+            text-align: center;
+            font-family: 'Nanum Myeongjo';
+            font-size: 3rem;
+            color: var(--deep-forest);
+            margin-bottom: 50px;
+            position: relative;
+            display: inline-block;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        h2::after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 3px;
+            background: var(--point-red);
+            margin: 20px auto 0;
+        }
+
+        /* 관계도 영역 */
+        #map-container {
+            background: radial-gradient(circle at center, #fff, #f4f4f4);
+            border-radius: 30px;
+            border: 1px solid #ddd;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+            height: 700px;
+            margin-top: 30px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            pointer-events: none;
+            font-size: 0.9rem;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 10;
+        }
+
+        /* 교훈 카드 */
+        .moral-grid {
+            display: flex;
+            gap: 30px;
+            margin-top: 50px;
+            flex-wrap: wrap;
+        }
+
+        .moral-card {
+            flex: 1;
+            min-width: 300px;
+            background: #fff;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+            text-align: center;
+            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border-top: 5px solid var(--gold);
+            border-bottom: 1px solid #eee;
+        }
+
+        .moral-card:hover {
+            transform: translateY(-15px);
+            border-color: var(--point-red);
+        }
+
+        .moral-card h3 {
+            color: var(--deep-forest);
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        .moral-card p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .moral-card p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        /* 챗봇 위젯 스타일 */
+        .chat-widget {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .chat-toggle-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: var(--gold);
+            border: 4px solid white;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 35px;
+            transition: 0.3s;
+            position: relative;
+            z-index: 1001;
+        }
+
+        .chat-toggle-btn:hover {
+            transform: scale(1.1) rotate(10deg);
+            background: var(--point-red);
+            color: white;
+        }
+
+        .chat-label {
+            margin-top: 10px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: var(--deep-forest);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            font-family: 'Nanum Myeongjo';
+            border: 1px solid var(--gold);
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .chat-label:hover {
+            color: var(--point-red);
+            transform: scale(1.05);
+        }
+
+        .chat-popup {
+            width: 380px;
+            height: 500px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transform-origin: bottom center;
+            transform: scale(0);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid #ddd;
+            pointer-events: none;
+            /* 닫혀있을 때 클릭 방지 */
+        }
+
+        .chat-popup.active {
+            transform: scale(1);
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .chat-header {
+            background: var(--deep-forest);
+            color: var(--gold);
+            padding: 15px 20px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'Nanum Myeongjo';
+        }
+
+        .chat-window {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #fdfdfd;
+            font-size: 0.95rem;
+        }
+
+        .chat-message {
+            margin-bottom: 15px;
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 15px;
+            line-height: 1.4;
+            word-break: break-word;
+            animation: fadeInMsg 0.3s ease;
+        }
+
+        @keyframes fadeInMsg {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .chat-message.bot {
+            background: #f0f4f8;
+            color: #333;
+            border-bottom-left-radius: 2px;
+            margin-right: auto;
+        }
+
+        .chat-message.user {
+            background: var(--gold);
+            color: var(--deep-forest);
+            border-bottom-right-radius: 2px;
+            margin-left: auto;
+            font-weight: bold;
+        }
+
+        .chat-input-area {
+            padding: 15px;
+            background: white;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 8px;
+        }
+
+        .chat-input-area input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            outline: none;
+            font-family: 'Gowun Batang';
+        }
+
+        .chat-input-area button {
+            padding: 0 20px;
+            background: var(--deep-forest);
+            color: white;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        /* 사운드 토글 버튼 */
+        .sound-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 2000;
+            background: rgba(0, 0, 0, 0.5);
+            color: var(--gold);
+            border: 1px solid var(--gold);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: 0.3s;
+        }
+
+        .sound-toggle:hover {
+            background: var(--gold);
+            color: var(--deep-forest);
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+
+<body>
+
+    <section class="hero">
+        <h1>백설공주</h1>
+        <p>거울아 거울아, 세상에서 누가 제일 아름답니?</p>
+        <div class="main-menu">
+            <button onclick="openTab('story'); playSound('click')">이야기 읽기</button>
+            <button onclick="openTab('rel'); playSound('click')">인물 관계도</button>
+            <button onclick="openTab('lesson'); playSound('click')">교훈 보기</button>
+        </div>
+    </section>
+
+    <div class="sound-toggle" onclick="toggleMute()" title="소리 켜기/끄기">
+        <span id="sound-icon">🔊</span>
+    </div>
+
+    <nav id="top-nav" style="visibility: hidden;">
+        <a class="nav-link" onclick="openTab('story')">스토리</a>
+        <a class="nav-link" onclick="openTab('rel')">인물 관계도</a>
+        <a class="nav-link" onclick="openTab('lesson')">교훈</a>
+        <a class="nav-link" style="color:var(--gold)" onclick="window.scrollTo({top:0, behavior:'smooth'})">TOP</a>
+    </nav>
+
+    <div id="story" class="section">
+        <div class="container">
+            <h2>영원한 동화의 시작</h2>
+            <div style="line-height: 2.2; font-size: 1.2rem; color: #444; text-align: justify; padding: 0 50px;">
+                <p>
+                    옛날 어느 겨울, 한 왕비가 창가에 앉아 바느질을 하고 있었습니다. 창틀은 흑단나무로 되어 있었고, 밖에는 흰 눈이 내리고 있었습니다.
+                    왕비가 바늘에 손을 찔려 붉은 피 세 방울이 눈 위에 떨어졌습니다. 그 붉은 색이 흰 눈과 어우러져 너무나 아름다워 보였기에 왕비는 소원을 빌었습니다.
+                    <br><br>
+                    <em>"눈처럼 하얀 피부, 피처럼 붉은 입술, 흑단처럼 검은 머리카락을 가진 아이를 낳게 해주세요."</em>
+                    <br><br>
+                    그렇게 태어난 아이가 바로 <strong>백설공주</strong>입니다.
+                    그러나 왕비가 세상을 떠나고 새로 들어온 <strong>새 왕비</strong>는 아름답지만 매우 교만하고 질투심이 많은 마녀였습니다.
+                    그녀에게는 진실만을 말하는 <strong>마법의 거울</strong>이 있었는데, 매일 자신의 아름다움을 확인받곤 했습니다.
+                    어느 날 거울이 백설공주가 가장 아름답다고 말하자, 왕비의 질투는 걷잡을 수 없는 분노로 변했습니다.
+                    <br><br>
+                    숲으로 쫓겨난 공주는 <strong>일곱 난쟁이</strong>들을 만나 평화로운 나날을 보내지만,
+                    왕비는 노파로 변장해 <strong>독사과</strong>를 건네고 공주는 깊은 잠에 빠지게 됩니다.
+                    결국 진정한 사랑을 품은 <strong>이웃 나라 왕자</strong>의 등장으로 공주는 깨어나고, 그들은 오래오래 행복하게 살았습니다.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div id="rel" class="section">
+        <div class="container">
+            <h2>인물 및 사물 관계도</h2>
+            <p style="text-align: center; color: #666; margin-bottom: 20px;">
+                드래그하여 관계를 확인해보세요. 화살표는 행동이나 감정의 방향을 나타냅니다.
+            </p>
+            <div id="tooltip" class="tooltip"></div>
+            <div id="map-container"></div>
+        </div>
+    </div>
+
+    <div id="lesson" class="section">
+        <div class="container">
+            <h2>이야기가 남긴 메시지</h2>
+            <div class="moral-grid">
+                <div class="moral-card">
+                    <h3>진정한 아름다움</h3>
+                    <p>외면의 아름다움은 시들지만, 친절하고 순수한 내면의 아름다움은 세상을 변화시키는 힘이 있습니다.</p>
+                </div>
+                <div class="moral-card">
+                    <h3>권선징악</h3>
+                    <p>타인을 해치려는 악한 마음과 질투는 결국 자기 자신에게 되돌아와 스스로를 파멸시킵니다.</p>
+                </div>
+                <div class="moral-card">
+                    <h3>사랑과 희망</h3>
+                    <p>어둠 속에서도 희망을 잃지 않고, 진실한 사랑과 우정이 있다면 어떤 시련도 극복할 수 있습니다.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 플로팅 챗봇 위젯 -->
+    <div class="chat-widget">
+        <div class="chat-popup" id="chat-popup">
+            <div class="chat-header">
+                <span>🧚 이야기 요정</span>
+                <span style="cursor:pointer" onclick="toggleChat()">✕</span>
+            </div>
+            <div id="chat-window" class="chat-window">
+                <div class="chat-message bot">
+                    안녕하세요! 무엇이든 물어보세요.<br>
+                    <small>예: "이름이 왜 백설공주야?", "왕비는 누구야?", "교훈 알려줘"</small>
+                </div>
+            </div>
+            <div class="chat-input-area">
+                <input type="text" id="user-input" placeholder="질문하기..." onkeypress="handleKeyPress(event)">
+                <button onclick="sendMessage()">전송</button>
+            </div>
+        </div>
+        <div class="chat-toggle-btn" onclick="toggleChat()">
+            <span style="font-size: 2rem;">🧚</span>
+        </div>
+        <div class="chat-label" onclick="toggleChat()">이야기 요정</div>
+    </div>
+
+    <!-- 오디오 컨텍스트 초기화를 위한 투명 버튼 (첫 인터랙션용) -->
+    <div id="audio-init-overlay"
+        style="position:fixed; top:0; left:0; width:100%; height:100%; z-index:9999; display:none;"
+        onclick="initAudio()"></div>
+
+    <script>
+        function openTab(id) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            document.getElementById('top-nav').style.visibility = 'visible';
+
+            // Scroll to nav
+            const nav = document.getElementById('top-nav');
+            const offset = nav.getBoundingClientRect().height;
+            const bodyRect = document.body.getBoundingClientRect().top;
+            const elementRect = document.getElementById(id).getBoundingClientRect().top;
+            const elementPosition = elementRect - bodyRect;
+            const offsetPosition = elementPosition - offset - 20;
+
+            window.scrollTo({
+                top: offsetPosition,
+                behavior: "smooth"
+            });
+
+            if (id === 'rel') setTimeout(renderMap, 100);
+        }
+
+        // --- 챗봇 로직 ---
+        function toggleChat() {
+            const popup = document.getElementById('chat-popup');
+            popup.classList.toggle('active');
+            if (popup.classList.contains('active')) {
+                document.getElementById('user-input').focus();
+                playSound('pop');
+            } else {
+                playSound('click');
+            }
+        }
+
+        const knowledgeBase = [
+            {
+                keywords: ["안녕", "반가워", "하이", "ㅎㅇ"],
+                answer: "안녕하세요! 저는 백설공주 이야기를 들려주는 요정이에요. 이야기 속 궁금한 점을 물어봐주세요! 🧚"
+            },
+            {
+                keywords: ["이름", "백설공주 뜻", "왜 백설", "하얀 피부", "외모"],
+                answer: "눈처럼 하얀 피부, 피처럼 붉은 입술, 흑단처럼 검은 머리카락을 가지고 태어나서 '백설공주'라고 불리게 되었답니다."
+            },
+            {
+                keywords: ["결말", "끝", "마지막", "어떻게 돼", "해피엔딩", "결혼"],
+                answer: "왕자가 백설공주의 죽음을 슬퍼하며 관을 옮기던 중, 흔들림으로 인해 공주의 목에 걸린 독사과 조각이 튀어나왔어요. 공주는 깨어났고, 왕자와 결혼하여 오래오래 행복하게 살았답니다."
+            },
+            {
+                keywords: ["왕비", "왜", "이유", "독사과", "죽이려고", "미워", "질투", "계모", "마녀", "새엄마"],
+                answer: "왕비는 세상에서 자신이 가장 아름다워야 한다고 생각했어요. 그런데 마법의 거울이 백설공주가 더 아름답다고 하자, 질투심에 눈이 멀어 공주를 없애려고 독사과를 먹인 것이랍니다."
+            },
+            {
+                keywords: ["난쟁이", "일곱", "누구", "친구", "오두막"],
+                answer: "일곱 난쟁이는 숲속 오두막에 살며 광산에서 보석을 캐는 일을 해요. 쫓겨난 백설공주를 받아주고 가족처럼 돌봐준 따뜻한 친구들입니다."
+            },
+            {
+                keywords: ["거울", "마법", "기능", "진실", "누가 제일 예뻐"],
+                answer: "마법의 거울은 세상의 모든 진실을 알고 있어요. 왕비가 '거울아 거울아, 세상에서 누가 제일 예쁘니?'라고 물으면 거짓 없이 대답을 해주는 신비한 물건입니다."
+            },
+            {
+                keywords: ["왕자", "역할", "남주", "구원"],
+                answer: "왕자는 이웃 나라 사람으로, 백설공주를 보고 첫눈에 반했어요. 그의 진실한 사랑과 관심이 결국 공주를 죽음(잠)에서 깨어나게 만들었답니다."
+            },
+            {
+                keywords: ["사냥꾼", "숲", "도망", "쫒겨", "쫓겨"],
+                answer: "원래 왕비는 사냥꾼을 시켜 공주를 없애려 했지만, 사냥꾼은 어린 공주를 불쌍히 여겨 숲으로 도망가게 놓아주었답니다."
+            },
+            {
+                keywords: ["변장", "할머니", "노파", "속임수"],
+                answer: "왕비는 백설공주를 안심시키기 위해 허름한 시골 노파로 변장해서 숲속 오두막을 찾아가 독사과를 건넸어요."
+            },
+            {
+                keywords: ["교훈", "배울점", "메시지", "주제"],
+                answer: "이 이야기는 '진정한 아름다움은 고운 마음씨에서 나온다'는 것과 '남을 해치려는 악한 마음은 결국 벌을 받는다'는 교훈을 담고 있어요."
+            }
+        ];
+
+        // --- 사운드 시스템 (Web Audio API) ---
+        let audioCtx;
+        let isMuted = false;
+
+        function initAudio() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // 페이지 아무곳이나 클릭하면 오디오 컨텍스트 활성화 시도
+        document.addEventListener('click', initAudio, { once: true });
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            const icon = document.getElementById('sound-icon');
+            if (isMuted) {
+                icon.textContent = '🔇';
+                if (audioCtx) audioCtx.suspend();
+            } else {
+                icon.textContent = '🔊';
+                if (audioCtx) audioCtx.resume();
+            }
+        }
+
+        function playSound(type) {
+            if (isMuted || !audioCtx) return;
+
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+
+            if (type === 'hover') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.exponentialRampToValueAtTime(600, now + 0.05);
+                gainNode.gain.setValueAtTime(0.05, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+                osc.start(now);
+                osc.stop(now + 0.05);
+            } else if (type === 'click') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(600, now);
+                osc.frequency.exponentialRampToValueAtTime(300, now + 0.1);
+                gainNode.gain.setValueAtTime(0.2, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            } else if (type === 'pop') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, now);
+                osc.frequency.exponentialRampToValueAtTime(1200, now + 0.1);
+                gainNode.gain.setValueAtTime(0.1, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            } else if (type === 'msg_send') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(440, now);
+                osc.frequency.setValueAtTime(880, now + 0.1);
+                gainNode.gain.setValueAtTime(0.1, now);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            } else if (type === 'msg_receive') {
+                // 띠링~ (화음 효과)
+                playTone(523.25, 0, 0.3); // C5
+                setTimeout(() => playTone(659.25, 0, 0.3), 100); // E5
+            }
+        }
+
+        function playTone(freq, delay, duration) {
+            if (isMuted || !audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime + delay;
+            osc.frequency.setValueAtTime(freq, now);
+            gainNode.gain.setValueAtTime(0.1, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
+            osc.start(now);
+            osc.stop(now + duration);
+        }
+
+        // 버튼들에 호버 사운드 추가
+        document.querySelectorAll('button, .nav-link, .chat-toggle-btn').forEach(btn => {
+            btn.addEventListener('mouseenter', () => playSound('hover'));
+        });
+
+        function handleKeyPress(event) {
+            if (event.key === "Enter") sendMessage();
+        }
+
+        function sendMessage() {
+            const inputField = document.getElementById("user-input");
+            const message = inputField.value.trim();
+            if (message === "") return;
+
+            addMessage(message, "user");
+            playSound('msg_send');
+            inputField.value = "";
+
+            // 0.5초 딜레이 후 답변
+            setTimeout(() => {
+                const response = getBotResponse(message);
+                addMessage(response, "bot");
+                playSound('msg_receive');
+            }, 500);
+        }
+
+        function addMessage(text, sender) {
+            const chatWindow = document.getElementById("chat-window");
+            const div = document.createElement("div");
+            div.className = `chat-message ${sender}`;
+            div.innerHTML = text; // innerHTML allows <br>
+            chatWindow.appendChild(div);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+
+        function getBotResponse(input) {
+            // 간단한 키워드 매칭
+            for (const item of knowledgeBase) {
+                for (const keyword of item.keywords) {
+                    if (input.includes(keyword)) {
+                        return item.answer;
+                    }
+                }
+            }
+            return "죄송해요, 그 질문은 아직 제가 배우지 못했어요. 😢<br>다른 질문을 해보시겠어요?<br><small>예: 백설공주의 의미, 사냥꾼 이야기, 독사과를 만든 사람 등</small>";
+        }
+
+        function renderMap() {
+            d3.select("#map-container").selectAll("*").remove();
+            const container = document.getElementById('map-container');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            // --- 데이터 정의 (새로운 이미지 적용) ---
+            // 이미지 경로: images/filename.png
+            const nodes = [
+                { id: "백설공주", img: "images/snow_white.png", group: "protagonist", role: "주인공" },
+                { id: "왕비", img: "images/evil_queen.png", group: "antagonist", role: "악당/계모" },
+                { id: "난쟁이들", img: "images/seven_dwarfs.png", group: "helper", role: "조력자" },
+                { id: "왕자", img: "images/prince.png", group: "hero", role: "구원자" },
+                { id: "마법거울", img: "images/magic_mirror.png", group: "item", role: "진실의 도구" },
+                { id: "독사과", img: "images/poison_apple.svg", group: "weapon", role: "치명적 무기" }
+            ];
+
+            const links = [
+                { source: "왕비", target: "백설공주", label: "질투/살해시도", color: "#d32f2f" },
+                { source: "백설공주", target: "왕비", label: "계모", color: "#888" },
+                { source: "왕비", target: "마법거울", label: "소유", color: "#555" },
+                { source: "마법거울", target: "왕비", label: "진실 조언", color: "#aaa" },
+                { source: "난쟁이들", target: "백설공주", label: "보호/우정", color: "#4caf50" },
+                { source: "왕자", target: "백설공주", label: "사랑/키스", color: "#e91e63" },
+                { source: "왕비", target: "독사과", label: "제작", color: "#5d4037" },
+                { source: "독사과", target: "백설공주", label: "위협", color: "#d32f2f" }
+            ];
+
+            const svg = d3.select("#map-container").append("svg")
+                .attr("width", width)
+                .attr("height", height)
+                .call(d3.zoom().on("zoom", (event) => {
+                    g.attr("transform", event.transform);
+                }))
+                .append("g");
+
+            const g = svg.append("g");
+
+            // --- 화살표 마커 정의 ---
+            const defs = svg.append("defs");
+
+            // 링크 색상별 마커 생성
+            const distinctColors = [...new Set(links.map(l => l.color))];
+            distinctColors.forEach(color => {
+                const safeColor = color.replace("#", "");
+                defs.append("marker")
+                    .attr("id", "arrow-" + safeColor)
+                    .attr("viewBox", "0 -5 10 10")
+                    .attr("refX", 58) // 노드 반지름(40) + 여유
+                    .attr("refY", 0)
+                    .attr("markerWidth", 8)
+                    .attr("markerHeight", 8)
+                    .attr("orient", "auto")
+                    .append("path")
+                    .attr("d", "M0,-5L10,0L0,5")
+                    .attr("fill", color);
+            });
+
+            // --- 이미지 패턴 정의 ---
+            nodes.forEach(d => {
+                defs.append("pattern")
+                    .attr("id", "p-" + d.id)
+                    .attr("height", 1)
+                    .attr("width", 1)
+                    .attr("patternContentUnits", "objectBoundingBox")
+                    .append("image")
+                    .attr("height", 1)
+                    .attr("width", 1)
+                    .attr("preserveAspectRatio", "xMidYMid slice")
+                    .attr("xlink:href", d.img);
+            });
+
+            const simulation = d3.forceSimulation(nodes)
+                .force("link", d3.forceLink(links).id(d => d.id).distance(220))
+                .force("charge", d3.forceManyBody().strength(-2000))
+                .force("center", d3.forceCenter(width / 2, height / 2))
+                .force("collide", d3.forceCollide(60));
+
+            // --- 링크 그리기 ---
+            // 곡선 효과를 위해 path 사용 가능하나 간단히 line 사용
+            const linkGroup = g.append("g").selectAll("g")
+                .data(links)
+                .enter().append("g");
+
+            const linkLine = linkGroup.append("line")
+                .attr("stroke", d => d.color)
+                .attr("stroke-width", 2.5)
+                .attr("marker-end", d => `url(#arrow-${d.color.replace("#", "")})`);
+
+            // 링크 라벨 배경 (가독성)
+            const linkLabelRect = linkGroup.append("rect")
+                .attr("rx", 5)
+                .attr("ry", 5)
+                .attr("fill", "rgba(255,255,255,0.8)");
+
+            const linkText = linkGroup.append("text")
+                .text(d => d.label)
+                .attr("text-anchor", "middle")
+                .attr("dy", 4)
+                .style("font-size", "0.85rem")
+                .style("fill", "#444")
+                .style("font-weight", "bold");
+
+            // --- 노드 그리기 ---
+            const node = g.append("g").selectAll("circle")
+                .data(nodes)
+                .enter().append("circle")
+                .attr("r", 45) // 반지름 키움
+                .attr("fill", d => `url(#p-${d.id})`)
+                .attr("stroke", d => {
+                    if (d.group === 'antagonist') return "#d32f2f";
+                    if (d.group === 'protagonist') return "#fbc02d";
+                    return "#ddd";
+                })
+                .attr("stroke-width", 4)
+                .style("filter", "drop-shadow(3px 3px 5px rgba(0,0,0,0.3))")
+                .call(d3.drag()
+                    .on("start", dragStart)
+                    .on("drag", dragging)
+                    .on("end", dragEnd))
+                .on("mouseover", (e, d) => {
+                    const tooltip = document.getElementById("tooltip");
+                    tooltip.style.left = (e.pageX + 10) + "px";
+                    tooltip.style.top = (e.pageY - 20) + "px";
+                    tooltip.style.opacity = 1;
+                    tooltip.innerHTML = `<strong>${d.id}</strong><br><small>${d.role}</small>`;
+                    d3.select(e.target).transition().attr("r", 55).attr("stroke-width", 6);
+                    playSound('hover');
+                })
+                .on("mouseout", (e) => {
+                    document.getElementById("tooltip").style.opacity = 0;
+                    d3.select(e.target).transition().attr("r", 45).attr("stroke-width", 4);
+                });
+
+            const label = g.append("g").selectAll("text")
+                .data(nodes)
+                .enter().append("text")
+                .text(d => d.id)
+                .attr("dy", 70)
+                .attr("text-anchor", "middle")
+                .style("font-weight", "bold")
+                .style("font-family", "Nanum Myeongjo")
+                .style("font-size", "1.1rem")
+                .style("fill", "#222")
+                .style("text-shadow", "1px 1px 0px white");
+
+            simulation.on("tick", () => {
+                linkLine
+                    .attr("x1", d => d.source.x)
+                    .attr("y1", d => d.source.y)
+                    .attr("x2", d => d.target.x)
+                    .attr("y2", d => d.target.y);
+
+                // 링크 텍스트 위치 계산 (중간)
+                linkText
+                    .attr("x", d => (d.source.x + d.target.x) / 2)
+                    .attr("y", d => (d.source.y + d.target.y) / 2);
+
+                // 텍스트 배경 박스 크기 조절
+                linkLabelRect
+                    .attr("x", d => ((d.source.x + d.target.x) / 2) - (d.label.length * 5 + 5))
+                    .attr("y", d => ((d.source.y + d.target.y) / 2) - 10)
+                    .attr("width", d => d.label.length * 10 + 10)
+                    .attr("height", 20);
+
+                node
+                    .attr("cx", d => d.x)
+                    .attr("cy", d => d.y);
+
+                label
+                    .attr("x", d => d.x)
+                    .attr("y", d => d.y);
+            });
+
+            function dragStart(e, d) { if (!e.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; }
+            function dragging(e, d) { d.fx = e.x; d.fy = e.y; }
+            function dragEnd(e, d) { if (!e.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }
+        }
+    </script>
+
+</body>
+
+</html>
